@@ -17,6 +17,16 @@ const adminNavItems = [
   { href: "/admin/reports", label: "Reportes", icon: FileText },
 ]
 
+const getRoleDisplayName = (role: string): string => {
+  const roleNames: Record<string, string> = {
+    admin: "Administrador",
+    user: "Usuario",
+    mensajero: "Mensajero",
+    gerente: "Gerente",
+  }
+  return roleNames[role] || role
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth()
   const router = useRouter()
@@ -29,8 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!user) {
         console.log("[v0] AdminLayout: No user, redirecting to /login")
         router.push("/login")
-      } else if (user.role !== "admin" && user.role !== "employee") {
-        console.log("[v0] AdminLayout: User role not admin/employee, redirecting to /")
+      } else if (user.role !== "admin" && user.role !== "gerente" && user.role !== "mensajero") {
+        console.log("[v0] AdminLayout: User role not admin/gerente/mensajero, redirecting to /")
         router.push("/")
       } else {
         console.log("[v0] AdminLayout: User authenticated with role:", user.role)
@@ -46,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (!user || (user.role !== "admin" && user.role !== "employee")) {
+  if (!user || (user.role !== "admin" && user.role !== "gerente" && user.role !== "mensajero")) {
     return null
   }
 
@@ -111,9 +121,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="mb-3 px-4">
               <p className="font-medium text-sm">{user.name}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {user.role === "admin" ? "Administrador" : "Empleado"}
-              </p>
+              <p className="text-xs text-muted-foreground capitalize">{getRoleDisplayName(user.role)}</p>
             </div>
             <Button variant="outline" className="w-full justify-start gap-2 bg-transparent" onClick={handleLogout}>
               <LogOut size={18} />

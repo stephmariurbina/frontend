@@ -32,6 +32,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAuth } from "@/lib/auth-context"
 import { getManagerRoles, registerManager, deleteManager, updateManager, type ManagerResponse } from "@/lib/api"
 
+type EmployeeRole = "admin" | "user" | "mensajero" | "gerente"
+
+const getRoleDisplayName = (role: EmployeeRole): string => {
+  const roleNames: Record<EmployeeRole, string> = {
+    admin: "Administrador",
+    user: "Usuario",
+    mensajero: "Mensajero",
+    gerente: "Gerente",
+  }
+  return roleNames[role] || role
+}
+
 export default function AdminEmployeesPage() {
   const { user } = useAuth()
   const [employees, setEmployees] = useState<ManagerResponse[]>([])
@@ -45,15 +57,14 @@ export default function AdminEmployeesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newEmployee, setNewEmployee] = useState({
-    firstName: "",
-    secondName: "",
-    firstLastName: "",
-    secondLastName: "",
-    email: "",
-    role: "employee" as "admin" | "employee",
-    department: "",
-    phone: "",
-    password: "",
+    Pnom: "",
+    Snom: "",
+    Papellido: "",
+    Sapellido: "",
+    Email: "",
+    Rol: "user" as EmployeeRole,
+    Telefono: "",
+    Password: "",
   })
 
   const isAdmin = user?.role === "admin"
@@ -75,18 +86,13 @@ export default function AdminEmployeesPage() {
 
   const filteredEmployees = employees.filter(
     (emp) =>
-      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.department.toLowerCase().includes(searchTerm.toLowerCase()),
+      emp.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.department?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const buildFullName = () => {
-    const parts = [
-      newEmployee.firstName,
-      newEmployee.secondName,
-      newEmployee.firstLastName,
-      newEmployee.secondLastName,
-    ].filter(Boolean)
+    const parts = [newEmployee.Pnom, newEmployee.Snom, newEmployee.Papellido, newEmployee.Sapellido].filter(Boolean)
     return parts.join(" ")
   }
 
@@ -95,17 +101,23 @@ export default function AdminEmployeesPage() {
     setIsSubmitting(true)
     setErrorMessage("")
 
+    // Validate phone is 8 digits
+    if (newEmployee.Telefono.length !== 8) {
+      setErrorMessage("El teléfono debe tener exactamente 8 dígitos")
+      setIsSubmitting(false)
+      return
+    }
+
     const { data, error } = await registerManager(
       {
-        email: newEmployee.email,
-        password: newEmployee.password,
-        firstName: newEmployee.firstName.trim(),
-        secondName: newEmployee.secondName.trim() || undefined,
-        firstLastName: newEmployee.firstLastName.trim(),
-        secondLastName: newEmployee.secondLastName.trim() || undefined,
-        role: newEmployee.role,
-        department: newEmployee.department,
-        phone: newEmployee.phone,
+        Email: newEmployee.Email,
+        Password: newEmployee.Password,
+        Pnom: newEmployee.Pnom.trim(),
+        Snom: newEmployee.Snom.trim(),
+        Papellido: newEmployee.Papellido.trim(),
+        Sapellido: newEmployee.Sapellido.trim(),
+        Telefono: newEmployee.Telefono,
+        Rol: newEmployee.Rol,
       },
       user?.token,
     )
@@ -121,15 +133,14 @@ export default function AdminEmployeesPage() {
 
     const fullName = buildFullName()
     setNewEmployee({
-      firstName: "",
-      secondName: "",
-      firstLastName: "",
-      secondLastName: "",
-      email: "",
-      role: "employee",
-      department: "",
-      phone: "",
-      password: "",
+      Pnom: "",
+      Snom: "",
+      Papellido: "",
+      Sapellido: "",
+      Email: "",
+      Rol: "user",
+      Telefono: "",
+      Password: "",
     })
     setIsAddDialogOpen(false)
     setShowPassword(false)
@@ -214,72 +225,93 @@ export default function AdminEmployeesPage() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddEmployee} className="space-y-4 mt-4">
-                {/* ... existing form fields ... */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Primer Nombre *</Label>
+                    <Label htmlFor="Pnom">Primer Nombre *</Label>
                     <Input
-                      id="firstName"
+                      id="Pnom"
                       placeholder="Juan"
-                      value={newEmployee.firstName}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, firstName: e.target.value })}
+                      value={newEmployee.Pnom}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, Pnom: e.target.value })}
                       required
+                      maxLength={30}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="secondName">Segundo Nombre</Label>
+                    <Label htmlFor="Snom">Segundo Nombre</Label>
                     <Input
-                      id="secondName"
+                      id="Snom"
                       placeholder="Carlos"
-                      value={newEmployee.secondName}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, secondName: e.target.value })}
+                      value={newEmployee.Snom}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, Snom: e.target.value })}
+                      maxLength={30}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="firstLastName">Primer Apellido *</Label>
+                    <Label htmlFor="Papellido">Primer Apellido *</Label>
                     <Input
-                      id="firstLastName"
+                      id="Papellido"
                       placeholder="Pérez"
-                      value={newEmployee.firstLastName}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, firstLastName: e.target.value })}
+                      value={newEmployee.Papellido}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, Papellido: e.target.value })}
                       required
+                      maxLength={30}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="secondLastName">Segundo Apellido</Label>
+                    <Label htmlFor="Sapellido">Segundo Apellido</Label>
                     <Input
-                      id="secondLastName"
+                      id="Sapellido"
                       placeholder="López"
-                      value={newEmployee.secondLastName}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, secondLastName: e.target.value })}
+                      value={newEmployee.Sapellido}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, Sapellido: e.target.value })}
+                      maxLength={30}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico *</Label>
+                  <Label htmlFor="Email">Correo Electrónico *</Label>
                   <Input
-                    id="email"
+                    id="Email"
                     type="email"
                     placeholder="correo@nicaflex.com"
-                    value={newEmployee.email}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                    value={newEmployee.Email}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, Email: e.target.value })}
                     required
+                    maxLength={60}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña *</Label>
+                  <Label htmlFor="Telefono">Teléfono *</Label>
+                  <Input
+                    id="Telefono"
+                    type="tel"
+                    placeholder="88889999"
+                    value={newEmployee.Telefono}
+                    onChange={(e) =>
+                      setNewEmployee({ ...newEmployee, Telefono: e.target.value.replace(/\D/g, "").slice(0, 8) })
+                    }
+                    required
+                    minLength={8}
+                    maxLength={8}
+                  />
+                  <p className="text-xs text-muted-foreground">8 dígitos sin espacios ni guiones</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="Password">Contraseña *</Label>
                   <div className="relative">
                     <Input
-                      id="password"
+                      id="Password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Contraseña para el empleado"
-                      value={newEmployee.password}
-                      onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                      value={newEmployee.Password}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, Password: e.target.value })}
                       required
                       minLength={6}
                       className="pr-10"
@@ -295,52 +327,29 @@ export default function AdminEmployeesPage() {
                   <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Rol *</Label>
-                    <Select
-                      value={newEmployee.role}
-                      onValueChange={(value: "admin" | "employee") => setNewEmployee({ ...newEmployee, role: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="employee">Empleado</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Departamento *</Label>
-                    <Select
-                      value={newEmployee.department}
-                      onValueChange={(value) => setNewEmployee({ ...newEmployee, department: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Gerencia">Gerencia</SelectItem>
-                        <SelectItem value="Logística">Logística</SelectItem>
-                        <SelectItem value="Atención al Cliente">Atención al Cliente</SelectItem>
-                        <SelectItem value="Aduanas">Aduanas</SelectItem>
-                        <SelectItem value="Almacén">Almacén</SelectItem>
-                        <SelectItem value="Contabilidad">Contabilidad</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="Rol">Rol *</Label>
+                  <Select
+                    value={newEmployee.Rol}
+                    onValueChange={(value: EmployeeRole) => setNewEmployee({ ...newEmployee, Rol: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">Usuario</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="mensajero">Mensajero</SelectItem>
+                      <SelectItem value="gerente">Gerente</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input
-                    id="phone"
-                    placeholder="+505 8888-0000"
-                    value={newEmployee.phone}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                  />
-                </div>
+                {errorMessage && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                    {errorMessage}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -369,7 +378,7 @@ export default function AdminEmployeesPage() {
         </div>
       )}
 
-      {errorMessage && (
+      {errorMessage && !isAddDialogOpen && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
           <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
             <X size={18} className="text-red-600" />
@@ -433,7 +442,6 @@ export default function AdminEmployeesPage() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rol</TableHead>
-                  <TableHead>Departamento</TableHead>
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Fecha Registro</TableHead>
@@ -443,7 +451,7 @@ export default function AdminEmployeesPage() {
               <TableBody>
                 {filteredEmployees.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No se encontraron empleados
                     </TableCell>
                   </TableRow>
@@ -454,10 +462,9 @@ export default function AdminEmployeesPage() {
                       <TableCell className="text-muted-foreground">{emp.email}</TableCell>
                       <TableCell>
                         <Badge variant={emp.role === "admin" ? "default" : "secondary"}>
-                          {emp.role === "admin" ? "Admin" : "Empleado"}
+                          {getRoleDisplayName(emp.role as EmployeeRole)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{emp.department}</TableCell>
                       <TableCell>{emp.phone || "-"}</TableCell>
                       <TableCell>
                         <Badge
@@ -506,27 +513,18 @@ export default function AdminEmployeesPage() {
         </CardContent>
       </Card>
 
-      {!isAdmin && (
-        <p className="text-sm text-muted-foreground text-center mt-4">
-          Solo los administradores pueden agregar o modificar empleados
-        </p>
-      )}
-
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar Empleado</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar empleado?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de eliminar a <strong>{employeeToDelete?.name}</strong>? Esta acción eliminará su cuenta del
-              sistema y no podrá iniciar sesión.
+              Esta acción eliminará permanentemente a {employeeToDelete?.name} del sistema. Esta acción no se puede
+              deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

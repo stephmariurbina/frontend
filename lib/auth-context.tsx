@@ -9,25 +9,26 @@ import {
   updateManager,
 } from "./api"
 
-export type UserRole = "admin" | "employee" | "customer"
+export type UserRole = "admin" | "user" | "mensajero" | "gerente"
 
 export interface User {
   id: string
   email: string
   name: string
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
+  Pnom: string
+  Snom?: string
+  Papellido: string
+  Sapellido?: string
   role: UserRole
   token?: string
 }
 
 export interface NameFields {
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
+  Pnom: string // Primer nombre
+  Snom?: string // Segundo nombre
+  Papellido: string // Primer apellido
+  Sapellido?: string // Segundo apellido
+  Telefono: string // Teléfono (8 caracteres)
 }
 
 interface AuthContextType {
@@ -40,8 +41,6 @@ interface AuthContextType {
     password: string,
     nameFields: NameFields,
     role: UserRole,
-    department?: string,
-    phone?: string,
   ) => Promise<{ success: boolean; error?: string }>
   registerCustomer: (
     email: string,
@@ -56,13 +55,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const buildFullName = (nameFields: NameFields): string => {
-  const parts = [
-    nameFields.firstName,
-    nameFields.secondName,
-    nameFields.firstLastName,
-    nameFields.secondLastName,
-  ].filter(Boolean)
+  const parts = [nameFields.Pnom, nameFields.Snom, nameFields.Papellido, nameFields.Sapellido].filter(Boolean)
   return parts.join(" ")
+}
+
+function mapApiRoleToLocalRole(apiRole: string): UserRole {
+  const roleMap: Record<string, UserRole> = {
+    admin: "admin",
+    employee: "mensajero",
+    customer: "user",
+    mensajero: "mensajero",
+    gerente: "gerente",
+    user: "user",
+  }
+  return roleMap[apiRole] || "user"
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -70,42 +76,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    console.log("[v0] AuthProvider: Checking sessionStorage for saved user")
     const savedUser = sessionStorage.getItem("nicaflex_user")
-    console.log("[v0] AuthProvider: savedUser from sessionStorage:", savedUser)
 
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser)
-        console.log("[v0] AuthProvider: Parsed user:", parsedUser)
         setUser(parsedUser)
       } catch (error) {
-        console.log("[v0] AuthProvider: Error parsing saved user, clearing storage")
         sessionStorage.removeItem("nicaflex_user")
       }
-    } else {
-      console.log("[v0] AuthProvider: No saved user found, user should be null")
     }
     setIsLoading(false)
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const { data, error } = await apiLogin({ email, password })
+    const { data, error } = await apiLogin({ Email: email, Password: password })
 
     if (error || !data) {
       console.error("[v0] Login error:", error)
       return false
     }
 
+    const mappedRole = mapApiRoleToLocalRole(data.role)
+
     const loggedUser: User = {
       id: data.id,
       email: data.email,
-      name: data.name,
-      firstName: data.firstName,
-      secondName: data.secondName || "",
-      firstLastName: data.firstLastName,
-      secondLastName: data.secondLastName || "",
-      role: data.role,
+      name: data.name || `${data.Pnom || ""} ${data.Papellido || ""}`.trim(),
+      Pnom: data.Pnom || "",
+      Snom: data.Snom || "",
+      Papellido: data.Papellido || "",
+      Sapellido: data.Sapellido || "",
+      role: mappedRole,
       token: data.token,
     }
 
@@ -124,20 +126,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     nameFields: NameFields,
     role: UserRole,
-    department?: string,
-    phone?: string,
   ): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await registerManager(
       {
-        email,
-        password,
-        firstName: nameFields.firstName,
-        secondName: nameFields.secondName,
-        firstLastName: nameFields.firstLastName,
-        secondLastName: nameFields.secondLastName,
-        role: role as "admin" | "employee",
-        department,
-        phone,
+        Email: email,
+        Password: password,
+        Pnom: nameFields.Pnom,
+        Snom: nameFields.Snom || "",
+        Papellido: nameFields.Papellido,
+        Sapellido: nameFields.Sapellido || "",
+        Telefono: nameFields.Telefono,
+        Rol: role,
       },
       user?.token,
     )
@@ -155,12 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nameFields: NameFields,
   ): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await apiRegister({
-      email,
-      password,
-      firstName: nameFields.firstName,
-      secondName: nameFields.secondName,
-      firstLastName: nameFields.firstLastName,
-      secondLastName: nameFields.secondLastName,
+      Email: email,
+      Password: password,
+      Pnom: nameFields.Pnom,
+      Snom: nameFields.Snom || "",
+      Papellido: nameFields.Papellido,
+      Sapellido: nameFields.Sapellido || "",
+      Telefono: nameFields.Telefono,
     })
 
     if (error || !data) {
@@ -171,12 +171,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loggedUser: User = {
       id: data.id,
       email: data.email,
-      name: data.name,
-      firstName: data.firstName,
-      secondName: data.secondName || "",
-      firstLastName: data.firstLastName,
-      secondLastName: data.secondLastName || "",
-      role: data.role,
+      name: data.name || `${data.Pnom || ""} ${data.Papellido || ""}`.trim(),
+      Pnom: data.Pnom || "",
+      Snom: data.Snom || "",
+      Papellido: data.Papellido || "",
+      Sapellido: data.Sapellido || "",
+      role: mapApiRoleToLocalRole(data.role),
       token: data.token,
     }
 

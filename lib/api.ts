@@ -27,28 +27,29 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<{
 // ==================== USER ENDPOINTS ====================
 
 export interface UserRegisterData {
-  email: string
-  password: string
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
+  Pnom: string // Primer nombre (max 30)
+  Snom: string // Segundo nombre (max 30)
+  Papellido: string // Primer apellido (max 30)
+  Sapellido: string // Segundo apellido (max 30)
+  Email: string // Email (max 60)
+  Password: string // Password (min 6)
+  Telefono: string // Teléfono (8 caracteres)
 }
 
 export interface UserLoginData {
-  email: string
-  password: string
+  Email: string
+  Password: string
 }
 
 export interface UserLoginResponse {
   id: string
   email: string
   name: string
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
-  role: "admin" | "employee" | "customer"
+  Pnom: string
+  Snom?: string
+  Papellido: string
+  Sapellido?: string
+  role: "admin" | "user" | "mensajero" | "gerente"
   token?: string
 }
 
@@ -68,8 +69,18 @@ export async function loginUser(data: UserLoginData) {
   })
 }
 
+// ==================== DIRECCION ENDPOINTS ====================
+
+export interface CreateDireccionData {
+  calle: string // max 40
+  ciudad: string // max 40
+  departamento: string // max 30
+  codigoPostal: string // max 20
+  pais: string // max 60
+}
+
 // POST /user/dirección - Add user address
-export async function addUserAddress(address: any, token?: string) {
+export async function addUserAddress(address: CreateDireccionData, token?: string) {
   return apiRequest("/user/dirección", {
     method: "POST",
     body: JSON.stringify(address),
@@ -92,27 +103,26 @@ export async function trackPackage(codigo: string) {
 // ==================== ADMIN MANAGER ENDPOINTS ====================
 
 export interface ManagerRegisterData {
-  email: string
-  password: string
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
-  role: "admin" | "employee"
-  department?: string
-  phone?: string
+  Pnom: string // Primer nombre (max 30)
+  Snom: string // Segundo nombre (max 30)
+  Papellido: string // Primer apellido (max 30)
+  Sapellido: string // Segundo apellido (max 30)
+  Email: string // Email (max 60)
+  Password: string // Password (min 6)
+  Telefono: string // Teléfono (8 caracteres)
+  Rol: string // Rol del usuario
 }
 
 export interface ManagerResponse {
   id: string
   email: string
   name: string
-  firstName: string
-  secondName?: string
-  firstLastName: string
-  secondLastName?: string
-  role: "admin" | "employee"
-  department: string
+  Pnom: string
+  Snom?: string
+  Papellido: string
+  Sapellido?: string
+  role: "admin" | "user" | "mensajero" | "gerente"
+  department?: string
   phone?: string
   status: "active" | "inactive"
   createdAt: string
@@ -154,17 +164,18 @@ export async function getManagerRoles(token?: string) {
 // ==================== ADMIN PACKAGES ENDPOINTS ====================
 
 export interface PackageCreateData {
-  trackingId?: string
-  description: string
-  weight: string
-  origin: string
-  destination: string
-  sender: string
-  receiver: string
-  receiverEmail: string
-  currentStatus: string
-  estimatedDelivery: string
-  assignedTo?: string
+  Pnom: string
+  Snom: string
+  Papellido: string
+  Sapellido: string
+  ID_Direccion_Origen: number
+  ID_Direccion_Destino: number
+  n_Receptor: string
+  Peso: number // min 0.1
+  Largo?: number
+  Ancho?: number
+  Alto?: number
+  nombreEstado: string
 }
 
 export interface PackageResponse {

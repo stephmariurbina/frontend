@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Package, Loader2, User, Mail, Lock } from "lucide-react"
+import { Eye, EyeOff, Package, Loader2, User, Mail, Lock, Phone } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,10 +17,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [firstName, setFirstName] = useState("")
-  const [secondName, setSecondName] = useState("")
-  const [firstLastName, setFirstLastName] = useState("")
-  const [secondLastName, setSecondLastName] = useState("")
+  const [pnom, setPnom] = useState("")
+  const [snom, setSnom] = useState("")
+  const [papellido, setPapellido] = useState("")
+  const [sapellido, setSapellido] = useState("")
+  const [telefono, setTelefono] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
@@ -30,7 +31,13 @@ export default function LoginPage() {
   const router = useRouter()
 
   if (user) {
-    router.push(user.role === "admin" ? "/admin" : user.role === "employee" ? "/courier" : "/my-packages")
+    if (user.role === "admin" || user.role === "gerente") {
+      router.push("/admin")
+    } else if (user.role === "mensajero") {
+      router.push("/courier")
+    } else {
+      router.push("/my-packages")
+    }
     return null
   }
 
@@ -38,10 +45,11 @@ export default function LoginPage() {
     setEmail("")
     setPassword("")
     setConfirmPassword("")
-    setFirstName("")
-    setSecondName("")
-    setFirstLastName("")
-    setSecondLastName("")
+    setPnom("")
+    setSnom("")
+    setPapellido("")
+    setSapellido("")
+    setTelefono("")
     setError("")
     setSuccess("")
   }
@@ -85,23 +93,30 @@ export default function LoginPage() {
       return
     }
 
-    if (firstName.trim().length < 2) {
+    if (pnom.trim().length < 2) {
       setError("El primer nombre debe tener al menos 2 caracteres")
       setIsLoading(false)
       return
     }
 
-    if (firstLastName.trim().length < 2) {
+    if (papellido.trim().length < 2) {
       setError("El primer apellido debe tener al menos 2 caracteres")
       setIsLoading(false)
       return
     }
 
+    if (telefono.length !== 8) {
+      setError("El teléfono debe tener exactamente 8 dígitos")
+      setIsLoading(false)
+      return
+    }
+
     const result = await registerCustomer(email, password, {
-      firstName: firstName.trim(),
-      secondName: secondName.trim() || undefined,
-      firstLastName: firstLastName.trim(),
-      secondLastName: secondLastName.trim() || undefined,
+      Pnom: pnom.trim(),
+      Snom: snom.trim() || undefined,
+      Papellido: papellido.trim(),
+      Sapellido: sapellido.trim() || undefined,
+      Telefono: telefono,
     })
 
     if (result.success) {
@@ -138,29 +153,30 @@ export default function LoginPage() {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">Primer Nombre *</Label>
+                    <Label htmlFor="pnom">Primer Nombre *</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                       <Input
-                        id="firstName"
+                        id="pnom"
                         type="text"
                         placeholder="Juan"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        value={pnom}
+                        onChange={(e) => setPnom(e.target.value)}
                         required
-                        minLength={2}
+                        maxLength={30}
                         className="h-11 pl-10"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="secondName">Segundo Nombre</Label>
+                    <Label htmlFor="snom">Segundo Nombre</Label>
                     <Input
-                      id="secondName"
+                      id="snom"
                       type="text"
                       placeholder="Carlos"
-                      value={secondName}
-                      onChange={(e) => setSecondName(e.target.value)}
+                      value={snom}
+                      onChange={(e) => setSnom(e.target.value)}
+                      maxLength={30}
                       className="h-11"
                     />
                   </div>
@@ -168,33 +184,34 @@ export default function LoginPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="firstLastName">Primer Apellido *</Label>
+                    <Label htmlFor="papellido">Primer Apellido *</Label>
                     <Input
-                      id="firstLastName"
+                      id="papellido"
                       type="text"
                       placeholder="Pérez"
-                      value={firstLastName}
-                      onChange={(e) => setFirstLastName(e.target.value)}
+                      value={papellido}
+                      onChange={(e) => setPapellido(e.target.value)}
                       required
-                      minLength={2}
+                      maxLength={30}
                       className="h-11"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="secondLastName">Segundo Apellido</Label>
+                    <Label htmlFor="sapellido">Segundo Apellido</Label>
                     <Input
-                      id="secondLastName"
+                      id="sapellido"
                       type="text"
                       placeholder="López"
-                      value={secondLastName}
-                      onChange={(e) => setSecondLastName(e.target.value)}
+                      value={sapellido}
+                      onChange={(e) => setSapellido(e.target.value)}
+                      maxLength={30}
                       className="h-11"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico</Label>
+                  <Label htmlFor="email">Correo Electrónico *</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <Input
@@ -204,13 +221,33 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      maxLength={60}
                       className="h-11 pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
+                  <Label htmlFor="telefono">Teléfono *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                    <Input
+                      id="telefono"
+                      type="tel"
+                      placeholder="88889999"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      required
+                      minLength={8}
+                      maxLength={8}
+                      className="h-11 pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">8 dígitos sin espacios ni guiones</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña *</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <Input
@@ -234,7 +271,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                  <Label htmlFor="confirmPassword">Confirmar Contraseña *</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <Input
@@ -335,26 +372,6 @@ export default function LoginPage() {
                 </button>
               </p>
             </div>
-
-            {!isRegister && (
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm font-medium text-center mb-3">Credenciales de Prueba</p>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex justify-between">
-                    <span>Admin:</span>
-                    <span className="font-mono">admin@nicaflex.com / admin123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Empleado:</span>
-                    <span className="font-mono">empleado@nicaflex.com / empleado123</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cliente:</span>
-                    <span className="font-mono">cliente@gmail.com / cliente123</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
